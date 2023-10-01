@@ -31,7 +31,7 @@ class NGramLanguageModel:
     def __call__(self, string: String) -> ProbabilityDistribution:
         """Computes the conditoinal probability distribution p(token|string)."""
       
-        string = (*string[-self.context_size :])
+        string = (*string[-self.context_size :],)
         denominator = (self.counter.get(string) or 0) + self.vocabulary_size
 
-        return lambda token: (self.counter.get((*prefix, token)) or 0) + 1) / denominator
+        return lambda token: -math.log(((self.counter.get((*string, token)) or 0) + 1) / denominator)
