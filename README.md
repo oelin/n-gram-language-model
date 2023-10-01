@@ -1,2 +1,3 @@
-# n-gram-language-model
-A simple n-gram language model with Laplace smoothing.
+# $n$-gram Language Model
+
+A simple $n$-gram language model with Laplace smoothing.
