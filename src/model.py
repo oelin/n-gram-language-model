@@ -1,6 +1,7 @@
 from typing import Any, Callable, Sequence
-import math
 from collections import Counter
+from math import log
+
 from nltk.util import ngrams
 
 
@@ -102,5 +103,5 @@ class NGramLanguageModel:
             numerator = self.counter.get((*sequence, token), 0)
             numerator = numerator + 1  # Laplace smoothing.
 
-            return math.log(numerator / denominator)
+            return log(numerator / denominator)
         return log_probability_distribution
