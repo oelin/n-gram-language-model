@@ -1,7 +1,9 @@
-from typing import Any, Callable, Sequence
+from typing import List, Callable, Sequence
 import math
+
 from collections import Counter
 from nltk.util import ngrams
+
 
 String = Sequence[Any]
 ProbabilityDistribution = Callable[[Any], float]
@@ -9,23 +11,12 @@ LanguageModel = Callable[[String], ProbabilityDistribution]
 
 
 class NGramLanguageModel:
-    """N-gram language model with Laplace smoothing.
+    """
+    N-gram language model with Laplace smoothing.
 
-    Args:
-        vocabulary_size (int): The size of the vocabulary.
-        context_size (int, optional): The size of the n-gram context (default is 2).
-
-    Attributes:
-        vocabulary_size (int): The size of the vocabulary.
-        context_size (int): The size of the n-gram context.
-        counter (Counter): Counter object to store n-gram counts.
-
-    Methods:
-        fit(string: String) -> None:
-            Fits the model to the input string by counting n-grams.
-
-        __call__(string: String) -> ProbabilityDistribution:
-            Computes the conditional probability distribution p(token|string).
+    Parameters:
+    - vocabulary_size (int): The size of the vocabulary.
+    - context_size (int, optional): The size of the context for n-grams. Default is 2.
     """
 
     def __init__(self, vocabulary_size: int, context_size: int = 2) -> None:
@@ -35,36 +26,37 @@ class NGramLanguageModel:
 
     def fit(self, string: String) -> None:
         """
-        Fit the model to the input string by counting n-grams.
+        Fit the model to the input string.
 
-        Args:
-            string (String): The input sequence.
-
-        Returns:
-            None
+        Parameters:
+        - string (Sequence[Any]): The input sequence.
         """
-        
-        for i in range(1, self.context_size + 2):
-            observed_ngrams = ngrams(string, i)
-            self.counter.update(observed_ngrams)
 
-        # Add a "zero-gram" for the entire string.
-        
-        self.counter[('',)] = len(string)
+        observed_ngrams = []
+
+        for i in range(1, self.context_size + 2):
+            observed_ngrams += ngrams(string, i)
+
+        self.counter = Counter(observed_ngrams)
+        self.counter[('',)] = len(string)  # A "zero-gram" occurs before every token.
 
     def __call__(self, string: String) -> ProbabilityDistribution:
         """
         Compute the conditional probability distribution p(token|string).
 
-        Args:
-            string (String): The input sequence.
+        Parameters:
+        - string (Sequence[Any]): The input sequence.
 
         Returns:
-            ProbabilityDistribution: A function that calculates the negative log probability
-            of a given token based on the model.
+        - ProbabilityDistribution: A function that calculates the log probability of a token.
         """
-        
-        context = (*string[-self.context_size:],)
-        denominator = self.counter.get(context, 0) + self.vocabulary_size
-        
-        return lambda token: -math.log((self.counter.get((*context, token), 0) + 1) / denominator)
+
+        context = (*string[-self.context_size :],)
+        context_count = self.counter.get(context, 0)
+        denominator = context_count + self.vocabulary_size
+
+        def probability_distribution(token: Any) -> float:
+            numerator = self.counter.get((*context, token), 0) + 1
+            return -math.log(numerator / denominator)
+
+        return probability_distribution
