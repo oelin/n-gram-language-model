@@ -1,62 +1,106 @@
-from typing import List, Callable, Sequence
+from typing import Any, Callable, Sequence
 import math
-
 from collections import Counter
 from nltk.util import ngrams
 
 
-String = Sequence[Any]
-ProbabilityDistribution = Callable[[Any], float]
-LanguageModel = Callable[[String], ProbabilityDistribution]
+LogProbabilityDistribution = Callable[[Any], float]
+LanguageModel = Callable[[Sequence], LogProbabilityDistribution]
 
 
 class NGramLanguageModel:
     """
     N-gram language model with Laplace smoothing.
+    
+    Parameters
+    ----------
+    
+    vocabulary_size: int - The size of the vocabulary.
+    context_size: int - The size of the context window.
 
-    Parameters:
-    - vocabulary_size (int): The size of the vocabulary.
-    - context_size (int, optional): The size of the context for n-grams. Default is 2.
+    Attributes
+    ----------
+
+    vocabulary_size: int - The size of the vocabulary.
+    context_size: int - The size of the context window.
+    counter: Counter - A collection of n-gram counts.
+
+    Examples
+    --------
+
+    >>> string = 'the quick brown fox jumps over the lazy dog.'
+    >>> vocabulary = set(string)
+    >>> model = NGramLanguageModel(
+            vocabulary_size=len(vocabulary), 
+            context_size=2,
+        )
+    >>> model.fit(string)
+    >>> model('the quick brown')('f') 
+    -3.332204510175204
     """
 
-    def __init__(self, vocabulary_size: int, context_size: int = 2) -> None:
+    def __init__(self, vocabulary_size: int, context_size: int) -> None:
+        """Initializes the model."""
+        
         self.vocabulary_size = vocabulary_size
         self.context_size = context_size
         self.counter = Counter()
+    
+    def fit(self, sequence: Sequence) -> None:
+        """Fits the model to a sequence using MLE.
+        
+        Parameters
+        ----------
 
-    def fit(self, string: String) -> None:
-        """
-        Fit the model to the input string.
+        sequence: Sequence - the sequence.
 
-        Parameters:
-        - string (Sequence[Any]): The input sequence.
-        """
+        Returns
+        -------
 
-        observed_ngrams = []
-
-        for i in range(1, self.context_size + 2):
-            observed_ngrams += ngrams(string, i)
-
-        self.counter = Counter(observed_ngrams)
-        self.counter[('',)] = len(string)  # A "zero-gram" occurs before every token.
-
-    def __call__(self, string: String) -> ProbabilityDistribution:
-        """
-        Compute the conditional probability distribution p(token|string).
-
-        Parameters:
-        - string (Sequence[Any]): The input sequence.
-
-        Returns:
-        - ProbabilityDistribution: A function that calculates the log probability of a token.
+        None
         """
 
-        context = (*string[-self.context_size :],)
-        context_count = self.counter.get(context, 0)
-        denominator = context_count + self.vocabulary_size
+        self.counter.clear()
 
-        def probability_distribution(token: Any) -> float:
-            numerator = self.counter.get((*context, token), 0) + 1
-            return -math.log(numerator / denominator)
+        for n in range(1, self.context_size + 2):
+            self.counter.update(ngrams(sequence, n))
+    
+    def __call__(self, sequence: Sequence) -> LogProbabilityDistribution:
+        """Returns a Laplace smoothed log probability distribtion over tokens appearing
+        after a given sequence.
 
-        return probability_distribution
+        Parameters
+        ----------
+
+        sequence: Sequence - the sequence.
+
+        Returns
+        -------
+
+        LogProbabilityDistribution - the log probability distribution.
+        """
+
+        sequence = (*sequence[-self.context_size :], )
+        denominator = self.counter.get(sequence, 0)
+        denominator = denominator + self.vocabulary_size  # Laplace smoothing.
+
+        def log_probability_distribution(token: Any) -> float:
+            f"""A Laplace smoothed log probability distribtion over tokens appearing after 
+            the sequence.
+
+            Parameters
+            ----------
+
+            tokens: Any - a token.
+
+            Returns
+            -------
+
+            float: The log probability of the token appearing after the sequence.
+            """
+
+            numerator = self.counter.get((*sequence, token), 0)
+            numerator = numerator + 1  # Laplace smoothing.
+
+            return math.log(numerator / denominator)
+        return log_probability_distribution
