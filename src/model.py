@@ -29,13 +29,13 @@ class NGramLanguageModel:
     Examples
     --------
 
-    >>> string = 'the quick brown fox jumps over the lazy dog.'
-    >>> vocabulary = set(string)
+    >>> sequence = 'the quick brown fox jumps over the lazy dog.'
+    >>> vocabulary = set(sequence)
     >>> model = NGramLanguageModel(
             vocabulary_size=len(vocabulary), 
             context_size=2,
         )
-    >>> model.fit(string)
+    >>> model.fit(sequence)
     >>> model('the quick brown')('f') 
     -3.332204510175204
     """
