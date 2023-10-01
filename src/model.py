@@ -66,8 +66,8 @@ class NGramLanguageModel:
             self.counter.update(ngrams(sequence, n))
     
     def __call__(self, sequence: Sequence) -> LogProbabilityDistribution:
-        """Returns a Laplace smoothed log probability distribtion over tokens appearing
-        after a given sequence.
+        """Returns a Laplace smoothed log probability distribtion over tokens 
+        appearing after a given sequence.
 
         Parameters
         ----------
@@ -85,8 +85,8 @@ class NGramLanguageModel:
         denominator = denominator + self.vocabulary_size  # Laplace smoothing.
 
         def log_probability_distribution(token: Any) -> float:
-            f"""A Laplace smoothed log probability distribtion over tokens appearing after 
-            the sequence.
+            """A Laplace smoothed log probability distribtion over tokens appearing 
+            after the sequence.
 
             Parameters
             ----------
