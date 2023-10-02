@@ -6,7 +6,6 @@ from nltk.util import ngrams
 
 
 LogProbabilityDistribution = Callable[[Any], float]
-LanguageModel = Callable[[Sequence], LogProbabilityDistribution]
 
 
 class NGramLanguageModel:
